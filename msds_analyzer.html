@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>MSDS 요약기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#12181f;
+    --panel:#1b2430;
+    --panel-border:#2c3947;
+    --paper:#f4efe4;
+    --paper-line:#d9d0ba;
+    --ink:#20242b;
+    --ink-soft:#5c5648;
+    --amber:#e8a33d;
+    --amber-ink:#5c3c0c;
+    --red:#c4483b;
+    --red-ink:#f2c9c3;
+    --teal:#4f8f8a;
+    --muted:#8b93a0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  .app{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:#e7e6df;
+    padding:32px 20px;
+    min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1px solid var(--panel-border);
+    padding-bottom:14px;
+    margin-bottom:24px;
+  }
+  .masthead h1{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin:0;
+    color:#f2f0e8;
+  }
+  .masthead span{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.04em;
+  }
+
+  .dropzone{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:28px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone.drag{
+    border-color:var(--amber);
+    background:#20293380;
+  }
+
+  .dz-title{font-size:14px;font-weight:600;color:#f2f0e8;margin:0 0 4px;}
+  .dz-sub{font-size:12px;color:var(--muted);margin:0;font-family:'IBM Plex Mono',monospace;}
+  .dz-file{
+    display:inline-block;margin-top:10px;font-family:'IBM Plex Mono',monospace;
+    font-size:12px;color:var(--amber);background:#2a2117;padding:4px 10px;border-radius:4px;
+  }
+
+  .status{
+    margin-top:14px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-height:16px;
+  }
+  .dot{
+    width:6px;height:6px;border-radius:50%;background:var(--amber);
+    animation:pulse 1s infinite ease-in-out;
+  }
+  @keyframes pulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+  .error{color:var(--red);}
+
+  .manifest{
+    margin-top:26px;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:6px;
+    overflow:hidden;
+    display:none;
+  }
+  .manifest.show{display:block;}
+
+  .m-head{
+    padding:20px 24px 16px;
+    border-bottom:2px solid var(--ink);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+  }
+  .m-head-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 6px;
+  }
+  .m-product{
+    font-size:20px;
+    font-weight:700;
+    margin:0;
+    line-height:1.3;
+  }
+  .m-cas{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  .placard{
+    flex-shrink:0;
+    width:76px;height:76px;
+    border:3px solid var(--ink);
+    border-radius:8px;
+    transform:rotate(45deg);
+    display:flex;align-items:center;justify-content:center;
+    background:#fff;
+  }
+  .placard.danger{border-color:var(--red);}
+  .placard-inner{
+    transform:rotate(-45deg);
+    text-align:center;
+  }
+  .placard-class{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:22px;font-weight:700;
+    color:var(--ink);
+    line-height:1;
+  }
+  .placard.danger .placard-class{color:var(--red);}
+  .placard-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:7px;letter-spacing:.05em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+
+  .m-section{
+    padding:16px 24px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .m-section:last-child{border-bottom:none;}
+  .m-section-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin:0 0 10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .m-section-title::after{
+    content:'';flex:1;height:1px;background:var(--paper-line);
+  }
+
+  .field-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:6px 0;
+    gap:16px;
+    border-bottom:1px dotted var(--paper-line);
+  }
+  .field-row:last-child{border-bottom:none;}
+  .field-label{
+    font-size:13px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .field-value{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    text-align:right;
+  }
+  .field-value.na{color:#a39d8c;font-weight:400;font-style:italic;}
+  .field-value.warn{color:var(--red);}
+
+  .m-footer{
+    padding:12px 24px;
+    background:#e9e1cd;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
+  .reset-btn{
+    margin-top:16px;
+    background:none;
+    border:1px solid var(--panel-border);
+    color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--amber);color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="wrap">
+
+    <div class="masthead">
+      <h1>MSDS 요약기</h1>
+      <span id="fileCount">0 files</span>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <p class="dz-title">MSDS PDF 파일을 클릭하거나 끌어다 놓으세요</p>
+      <p class="dz-sub">Section 9 (물리화학적 특성) / Section 14 (운송정보) 자동 추출 · 오프라인 작동</p>
+      <div class="dz-file" id="dzFile" style="display:none;"></div>
+    </div>
+    <input type="file" id="fileInput" accept="application/pdf" style="display:none;">
+
+    <div class="status" id="status"></div>
+
+    <div class="manifest" id="manifest"></div>
+
+    <button class="reset-btn" id="resetBtn" style="display:none;">다른 파일 분석하기</button>
+
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const fileInput = document.getElementById('fileInput');
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('click', () => fileInput.click());
+const dzFile = document.getElementById('dzFile');
+const statusEl = document.getElementById('status');
+const manifestEl = document.getElementById('manifest');
+const resetBtn = document.getElementById('resetBtn');
+const fileCount = document.getElementById('fileCount');
+
+let analyzedCount = 0;
+
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+resetBtn.addEventListener('click', () => {
+  manifestEl.classList.remove('show');
+  manifestEl.innerHTML = '';
+  resetBtn.style.display = 'none';
+  statusEl.innerHTML = '';
+  dzFile.style.display = 'none';
+  fileInput.value = '';
+});
+
+function setStatus(text, isError) {
+  statusEl.innerHTML = isError
+    ? `<span class="error">${text}</span>`
+    : `<span class="dot"></span><span>${text}</span>`;
+}
+
+async function handleFile(file) {
+  if (file.type !== 'application/pdf') {
+    setStatus('PDF 파일만 지원됩니다.', true);
+    return;
+  }
+  dzFile.style.display = 'inline-block';
+  dzFile.textContent = file.name;
+  manifestEl.classList.remove('show');
+  resetBtn.style.display = 'none';
+
+  try {
+    setStatus('PDF에서 텍스트 추출 중...');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+    const maxPages = Math.min(pdf.numPages, 20);
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(it => it.str).join(' ');
+      fullText += `\n\n[Page ${i}]\n` + pageText;
+    }
+
+    if (fullText.trim().length < 50) {
+      setStatus('텍스트를 추출하지 못했습니다. 스캔본(이미지) PDF일 수 있습니다.', true);
+      return;
+    }
+
+    setStatus('Section 9 / 14 패턴 분석 중...');
+    const extracted = extractOffline(fullText);
+    renderManifest(extracted, file.name);
+    setStatus('분석 완료. (자동 추출이므로 원본 대조 확인을 권장합니다)');
+    resetBtn.style.display = 'inline-block';
+    analyzedCount++;
+    fileCount.textContent = `${analyzedCount} file${analyzedCount === 1 ? '' : 's'}`;
+
+  } catch (err) {
+    console.error(err);
+    setStatus('오류가 발생했습니다: ' + err.message, true);
+  }
+}
+
+function sliceSection(text, startPatterns, endPatterns) {
+  let startIdx = -1;
+  for (const p of startPatterns) {
+    const m = p.exec(text);
+    if (m && (startIdx === -1 || m.index < startIdx)) startIdx = m.index;
+  }
+  if (startIdx === -1) return '';
+  let endIdx = text.length;
+  for (const p of endPatterns) {
+    p.lastIndex = 0;
+    const rest = text.slice(startIdx + 5);
+    const m = p.exec(rest);
+    if (m) {
+      const abs = startIdx + 5 + m.index;
+      if (abs < endIdx) endIdx = abs;
+    }
+  }
+  return text.slice(startIdx, endIdx);
+}
+
+function firstMatch(text, patterns) {
+  for (const p of patterns) {
+    p.lastIndex = 0;
+    const m = p.exec(text);
+    if (m && m[1]) {
+      const v = m[1].trim().replace(/\s{2,}/g, ' ');
+      if (v.length > 0 && v.length < 100) return v;
+    }
+  }
+  return null;
+}
+
+function extractOffline(fullText) {
+  const norm = fullText.replace(/\r/g, ' ');
+
+  const sec1 = sliceSection(norm,
+    [/SECTION\s*1\b/i, /1\s*[.\)]\s*(?:화학제품|물질\s*\/?\s*회사|Identification)/i],
+    [/SECTION\s*2\b/i, /\n?\s*2\s*[.\)]\s*(?:유해성|Hazard)/i]);
+
+  const sec9 = sliceSection(norm,
+    [/SECTION\s*9\b/i, /\b9\s*[.\)]\s*물리/, /\b9\s*[.\)]\s*Physical/i],
+    [/SECTION\s*10\b/i, /\b10\s*[.\)]\s*(?:안정성|Stability)/i]);
+
+  const sec14 = sliceSection(norm,
+    [/SECTION\s*14\b/i, /\b14\s*[.\)]\s*(?:운송|Transport)/i],
+    [/SECTION\s*15\b/i, /\b15\s*[.\)]\s*(?:법적|Regulatory)/i]);
+
+  const product_name = firstMatch(sec1.length ? sec1 : norm, [
+    /(?:제품명|제품\s*명칭|상\s*품\s*명)\s*[:：]?\s*([^\n]{2,80})/,
+    /Product\s*name\s*[:：]?\s*([^\n]{2,80})/i,
+    /Trade\s*name\s*[:：]?\s*([^\n]{2,80})/i
+  ]);
+
+  const cas_no = firstMatch(sec1.length ? sec1 : norm, [
+    /CAS[\s\-]*(?:No\.?|번호)?\s*[:：]?\s*(\d{2,7}-\d{2}-\d)/i
+  ]);
+
+  const flash_point = firstMatch(sec9, [
+    /(?:인화점)\s*[:：]?\s*([\-−]?\d[\d.,]*\s*(?:°\s*[CF]|℃|℉)?)/,
+    /Flash\s*Point\s*[:：\(\)a-zA-Z\s]{0,20}([\-−]?\d[\d.,]*\s*(?:°\s*[CF]|℃|℉)?)/i
+  ]);
+
+  const boiling_point = firstMatch(sec9, [
+    /(?:끓는점|비점)\s*[:：]?\s*([\-−]?\d[\d.,]*\s*(?:°\s*[CF]|℃|℉)?)/,
+    /Boiling\s*Point\s*[:：]?\s*([\-−]?\d[\d.,]*\s*(?:°\s*[CF]|℃|℉)?)/i
+  ]);
+
+  const appearance = firstMatch(sec9, [
+    /(?:외관|성상)\s*[:：]?\s*([^\n]{2,60})/,
+    /Appearance\s*[:：]?\s*([^\n]{2,60})/i
+  ]);
+
+  const un_number = firstMatch(sec14, [
+    /UN\s*(?:No\.?|번호|Number)?\s*[:：]?\s*(\d{4})/i,
+    /UN(\d{4})/
+  ]);
+
+  const proper_shipping_name = firstMatch(sec14, [
+    /(?:정식\s*운송명|운송\s*품명|품\s*명)\s*[:：]?\s*([^\n]{2,90})/,
+    /Proper\s*Shipping\s*Name\s*[:：]?\s*([^\n]{2,90})/i
+  ]);
+
+  const hazard_class = firstMatch(sec14, [
+    /(?:위험\s*등급|위험\s*분류|운송\s*위험\s*성|Hazard\s*Class|\bClass)[^\dIVX\n]{0,15}(\d(?:\.\d)?)\b/i
+  ]);
+
+  const packing_group = firstMatch(sec14, [
+    /(?:포장\s*등급|포장\s*그룹|Packing\s*Group|\bP\.?\s*G\.?)[^IVX\n]{0,15}(I{1,3}|IV)\b/i
+  ]);
+
+  const marine_pollutant = firstMatch(sec14, [
+    /(?:해양\s*오염\s*물질)\s*[:：]?\s*([^\n]{1,20})/,
+    /Marine\s*Pollutant\s*[:：]?\s*([^\n]{1,20})/i
+  ]);
+
+  const is_dangerous_goods = !!un_number;
+
+  return {
+    product_name,
+    cas_no,
+    section9: { flash_point, boiling_point, appearance },
+    section14: { un_number: un_number ? 'UN' + un_number : null, proper_shipping_name, hazard_class, packing_group, marine_pollutant, is_dangerous_goods }
+  };
+}
+
+function isNA(v) {
+  return !v || v === '정보 없음' || v === '해당없음' || v === 'N/A' || v === '정보없음';
+}
+
+function fieldRow(label, value, warnIfNA) {
+  const na = isNA(value);
+  const cls = na ? 'na' : (warnIfNA ? 'warn' : '');
+  return `<div class="field-row">
+    <span class="field-label">${label}</span>
+    <span class="field-value ${cls}">${na ? '정보 없음' : escapeHtml(value)}</span>
+  </div>`;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+function renderManifest(data, filename) {
+  const s9 = data.section9 || {};
+  const s14 = data.section14 || {};
+  const isDG = !!s14.is_dangerous_goods;
+
+  manifestEl.innerHTML = `
+    <div class="m-head">
+      <div>
+        <p class="m-head-title">Product identification</p>
+        <p class="m-product">${isNA(data.product_name) ? '품명 미확인' : escapeHtml(data.product_name)}</p>
+        ${isNA(data.cas_no) ? '' : `<p class="m-cas">CAS No. ${escapeHtml(data.cas_no)}</p>`}
+      </div>
+      <div class="placard ${isDG ? 'danger' : ''}">
+        <div class="placard-inner">
+          <div class="placard-class">${isNA(s14.hazard_class) ? '–' : escapeHtml(s14.hazard_class)}</div>
+          <div class="placard-label">${isDG ? 'Class' : 'Non-DG'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="m-section">
+      <p class="m-section-title">Section 9 — 물리화학적 특성</p>
+      ${fieldRow('인화점 (Flash point)', s9.flash_point)}
+      ${fieldRow('끓는점 (Boiling point)', s9.boiling_point)}
+      ${fieldRow('외관 (Appearance)', s9.appearance)}
+    </div>
+
+    <div class="m-section">
+      <p class="m-section-title">Section 14 — 운송정보</p>
+      ${fieldRow('UN번호', s14.un_number, !isNA(s14.un_number))}
+      ${fieldRow('정식운송명', s14.proper_shipping_name)}
+      ${fieldRow('위험등급 (Class)', s14.hazard_class, !isNA(s14.hazard_class))}
+      ${fieldRow('포장등급 (PG)', s14.packing_group)}
+      ${fieldRow('해양오염물질', s14.marine_pollutant)}
+    </div>
+
+    <div class="m-footer">
+      ${filename} 분석 결과 · ${isDG ? '⚠ 위험물(DG) 가능성 — 특송사 DG 신고 절차 확인 필요' : '비위험물로 판단됨 (문서 재확인 권장)'}
+    </div>
+  `;
+  manifestEl.classList.add('show');
+}
+</script>
+</body>
+</html>
